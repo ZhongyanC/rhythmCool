@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Rhythm.Cool-Rhythm Practice App</title>
+  <link rel="icon" type="image/gif" href="/challenge/icon.gif">
+  <meta name="description" content="Rhythm practice! Rhythm.cool is a little app can generate random rhythm pattern and let user test their rhythm accuracy" />
+  <!-- 全局CSS (app.css) 省略，按需保留 -->
+  <link rel="stylesheet" type="text/css" href="../app.css">
+  <!-- 挑战页面专用CSS -->
+  <link rel="stylesheet" type="text/css" href="../challenge/challenge0.1.css">
+</head>
+<body>
+
+  <!-- 容器，控制整体宽度与居中 -->
+  <div class="container" id="mainContent">
+    <!-- 标题 -->
+    <div class="header">
+      <div class = "headerText" id="headerText">
+        <!-- <div class="page-title">Rhythm<div class="page-subtitle">Lab</div></div> -->
+        <h1 class="page-title cyberpunk glitched ">RHYTHM.COOL</h1>
+        <!-- 难度提示 -->
+        <div class="difficulty">Difficulity：<div id="difficulityText"></div><div id="timeSigText"></div></div>
+      </div>
+      <div class="gradingArea">
+        <div class="grade grade-splus" id="gradeDisplay">S+</div>
+      </div>
+      <div class="settingButton" id="settingButton"><text class="fa fa-cog glow-cog"></text></div>
+    </div>
+
+    <!-- 多个小节的列表 -->
+    <div class="wide-display">
+      <div class="left-side">
+        <div class="measure-list">
+          <!-- 这里由JS动态插入 measure 元素 -->
+        </div>
+      </div>
+
+      <div class="right-side">
+        <!-- 提示框 -->
+        <div class="tap-hint" id="tap-hint">
+          <div class="tap-text">Tap here to test your accuracy!</div>
+        </div>
+        <!-- 播放和节拍控制区 -->
+        <div class="panel">
+          <div class="controls">
+            <button class="ctrl-btn" id="lastButton"><text class="fa fa-step-backward fa"></text></button>
+            <button class="ctrl-btn" id="startButton"><text class="fa fa-play fa"></text></button>
+            <button class="ctrl-btn" id="stopButton" ><text class="fa fa-stop fa"></text></button>
+            <button class="ctrl-btn" id="nextButton"><text class="fa fa-step-forward fa"></text></button>
+          </div>
+          <!-- BPM滑块 -->
+          <div class="bpm-slider">
+            <label for="bpmRange">BPM</label>
+            <input
+              type="range"
+              id="bpmRange"
+              name="bpmRange"
+              min="40"
+              max="160"
+              value="60"
+            />
+            <span id="bpmValue">60</span>
+          </div>
+        </div>
+        <!-- 底部导航 -->
+        <div class="footer">
+          <div class="examNumText">NO.<div class="examNumber"></div>.TEST</div>
+          <div class="tips"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+    <!-- 设置 -->
+    <div class="setting-modal" id="settingModal">
+      <!-- 弹窗内容 -->
+      <div class="setting-content">
+        <h3 class="cyberpunk">SETTINGS</h3>
+        <h4>Sound</h4>
+        <div class="choice" id="tune">
+          <select class="selector" id="soundSelector">
+            <option value="digital">Digital Sound</option>
+            <option value="mechanical">Mechanical Sound</option>
+            <!-- 可以根据需要添加更多选项 -->
+          </select>
+        </div>
+        <h4>Difficulity</h4>
+        <div class="choice" id="difficulty">
+          <select class="selector" id="difficulitySelector">
+            <!-- <option value="test">test</option> -->
+            <option value="supereasy">SuperEasy</option>
+            <option value="easy">Easy</option>
+            <option value="normal">Normal</option>
+            <option value="hard">Hard</option>
+            <option value="superhard">SuperHard</option>
+            <!-- 可以根据需要添加更多选项 -->
+          </select>
+        </div>
+        <h4>Bars</h4>
+        <div class="choice" id="bar">
+          <select class="selector" id="barsSelector">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <!-- 可以根据需要添加更多选项 -->
+          </select>
+        </div>
+        <h4>Cookies</h4>
+        <div class="choice" id="cookie">
+          <select class="selector" id="cookieSelector">
+            <option value="accepted">Accept</option>
+            <option value="rejected">Reject</option>
+            <!-- 可以根据需要添加更多选项 -->
+          </select>
+        </div>
+        <!-- 关闭按钮 -->
+        <button id="closeButton" class="closeButton">Save & Close</button>
+        <div class="aboutArea">
+          <a href="https://github.com/ZhongyanC/RhythmCool"><text id ="git" class="fa fa-github-square fa"></text></a>
+          <a href="mailto:zycao@ku.edu"><text id ="mail" class="fa fa-envelope fa"></text></a>
+          <!-- <text id ="wechat" class="fa fa-weixin fa"></text> -->
+        </div>
+      </div>
+    </div>
+
+  <div id="cookieConsent">
+    <p>
+      We use cookies to improve user experience. Please choose whether to agree.
+    </p>
+    <div class="cookie-buttons">
+      <button id="cookieAcceptBtn">Accept</button>
+      <button id="cookieRejectBtn">Reject</button>
+    </div>
+  </div>
+  <!-- JS: 动态渲染、事件等 -->
+  <script type="module" src="../challenge/challenge0.1.js"></script>
+  <script>
+  </script>
+</body>
+</html>
+

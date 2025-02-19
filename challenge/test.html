@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打字机效果</title>
+    <style>
+        .typing-container {
+            font-size: 24px;
+            font-family: "Courier New", Courier, monospace;
+            border-right: 2px solid black; /* 模拟光标 */
+        }
+    </style>
+</head>
+<body>
+    <div class="typing-container" id="typing"></div>
+
+    <script>
+        const text = "Maurice Ravel's Piano Concerto in G major, was composed between 1929 and 1931. The piano concerto is in three movements, with a total playing time of a little over 20 minutes. Ravel said that in this piece he was not aiming to be profound but to entertain, in the manner of Mozart and Saint-Saëns. Among its other influences are jazz and Basque folk music.";
+        const container = document.getElementById("typing");
+        let index = 0;
+
+        function type() {
+            if (index < text.length) {
+                container.innerHTML += text[index];
+                index++;
+                setTimeout(type, 20); // 每 200ms 打印一个字符
+            } else {
+                container.style.borderRight = "none"; // 结束后去掉光标
+            }
+        }
+
+        type();
+    </script>
+</body>
+</html>
