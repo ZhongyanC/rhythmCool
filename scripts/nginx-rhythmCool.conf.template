@@ -1,0 +1,20 @@
+# Generated from nginx-rhythmCool.conf.template by scripts/deploy-full.sh
+# Placeholders: __SERVER_NAME__, __DEPLOY_PATH__
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name __SERVER_NAME__;
+
+    root __DEPLOY_PATH__;
+    index challenge/challenge.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?)$ {
+        expires 7d;
+        add_header Cache-Control "public, immutable";
+    }
+}
