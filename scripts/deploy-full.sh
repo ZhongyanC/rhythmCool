@@ -32,7 +32,7 @@ if [[ ! -f "$TEMPLATE" ]]; then
   exit 1
 fi
 
-: "${CERTBOT_EMAIL:?Set CERTBOT_EMAIL (Let's Encrypt contact email)}"
+: "${CERTBOT_EMAIL:?Set CERTBOT_EMAIL (required for Certbot / ACME)}"
 
 DEPLOY_PATH="${DEPLOY_PATH:-/var/www/rhythmCool}"
 DEPLOY_HOST="${DEPLOY_HOST:-}"
@@ -45,10 +45,6 @@ CERTBOT_DOMAINS="${CERTBOT_DOMAINS:-$NGINX_SERVER_NAME}"
 SKIP_NGINX="${SKIP_NGINX:-0}"
 FORCE_NGINX_CONFIG="${FORCE_NGINX_CONFIG:-0}"
 DRY_RUN="${DRY_RUN:-0}"
-
-# Bound under set -u; EXIT trap may run before mktemp (e.g. early exit).
-GEN=""
-trap '[[ -n "${GEN:-}" ]] && rm -f -- "$GEN"' EXIT
 
 remote_sh() {
   [[ -n "${DEPLOY_HOST:-}" ]] || {
@@ -151,7 +147,12 @@ if [[ "$DRY_RUN" == "1" ]]; then
   exit 0
 fi
 
-GEN=$(mktemp)
+GEN=$(mktemp) || exit 1
+_deploy_nginx_tmp=$GEN
+cleanup_deploy_nginx_tmp() {
+  [[ -n "${_deploy_nginx_tmp-}" ]] && rm -f -- "$_deploy_nginx_tmp"
+}
+trap cleanup_deploy_nginx_tmp EXIT
 generate_nginx_conf "$GEN"
 
 echo "=== 2. Nginx site config ==="
@@ -167,4 +168,5 @@ echo "=== 3. Certbot (HTTPS) ==="
 check_certbot
 run_certbot
 
-echo "Done. Check: https://$(echo $CERTBOT_DOMAINS | awk '{print $1}')/"
+first_domain=$(echo "${CERTBOT_DOMAINS}" | awk '{print $1}')
+echo "Done. Check: https://${first_domain}/"
