@@ -46,6 +46,10 @@ SKIP_NGINX="${SKIP_NGINX:-0}"
 FORCE_NGINX_CONFIG="${FORCE_NGINX_CONFIG:-0}"
 DRY_RUN="${DRY_RUN:-0}"
 
+# Bound under set -u; EXIT trap may run before mktemp (e.g. early exit).
+GEN=""
+trap '[[ -n "${GEN:-}" ]] && rm -f -- "$GEN"' EXIT
+
 remote_sh() {
   [[ -n "${DEPLOY_HOST:-}" ]] || {
     echo "remote_sh: DEPLOY_HOST is empty" >&2
@@ -148,7 +152,6 @@ if [[ "$DRY_RUN" == "1" ]]; then
 fi
 
 GEN=$(mktemp)
-trap 'rm -f "$GEN"' EXIT
 generate_nginx_conf "$GEN"
 
 echo "=== 2. Nginx site config ==="
