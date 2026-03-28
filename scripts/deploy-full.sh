@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # One-shot deploy: static files + nginx site config + Certbot (Let's Encrypt HTTPS).
 #
-# Required:
+# Required (omit if SKIP_NGINX=1, or if DRY_RUN=1 and you only need static dry-run):
 #   CERTBOT_EMAIL          Email for Let's Encrypt registration / expiry notices
 #
 # Common:
@@ -14,13 +14,14 @@
 #
 # Optional:
 #   DEPLOY_CHOWN           Local only: chown after rsync (default www-data:www-data; empty = skip)
-#   SKIP_NGINX             1 = only sync static (same as deploy.sh)
+#   SKIP_NGINX             1 = only sync static files (no nginx / certbot; CERTBOT_EMAIL not required)
 #   FORCE_NGINX_CONFIG     1 = push nginx template even if site already has SSL (dangerous)
 #   DRY_RUN                1 = no writes; static rsync dry-run, skip nginx/certbot
 #
 # Examples:
 #   CERTBOT_EMAIL=you@domain.com ./scripts/deploy-full.sh
 #   DEPLOY_HOST=vps.example.com CERTBOT_EMAIL=you@domain.com ./scripts/deploy-full.sh
+#   SKIP_NGINX=1 ./scripts/deploy-full.sh    # static only; no CERTBOT_EMAIL
 
 set -euo pipefail
 
@@ -31,8 +32,6 @@ if [[ ! -f "$TEMPLATE" ]]; then
   echo "Missing template: $TEMPLATE" >&2
   exit 1
 fi
-
-: "${CERTBOT_EMAIL:?Set CERTBOT_EMAIL (required for Certbot / ACME)}"
 
 DEPLOY_PATH="${DEPLOY_PATH:-/var/www/rhythmCool}"
 DEPLOY_HOST="${DEPLOY_HOST:-}"
@@ -45,6 +44,44 @@ CERTBOT_DOMAINS="${CERTBOT_DOMAINS:-$NGINX_SERVER_NAME}"
 SKIP_NGINX="${SKIP_NGINX:-0}"
 FORCE_NGINX_CONFIG="${FORCE_NGINX_CONFIG:-0}"
 DRY_RUN="${DRY_RUN:-0}"
+
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+RSYNC_EXCLUDES=(
+  --exclude '.git/'
+  --exclude '.DS_Store'
+  --exclude '*.swp'
+)
+
+sync_static_files() {
+  local rsync_cmd=(rsync -av)
+  [[ "$DRY_RUN" == "1" ]] && rsync_cmd+=(--dry-run)
+
+  if [[ -n "$DEPLOY_HOST" ]]; then
+    rsync_cmd+=(-e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new")
+    rsync_cmd+=("${RSYNC_EXCLUDES[@]}")
+    rsync_cmd+=(--delete)
+    rsync_cmd+=("${PROJECT_ROOT}/")
+    rsync_cmd+=("${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/")
+    echo "Static -> ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
+  else
+    rsync_cmd+=("${RSYNC_EXCLUDES[@]}")
+    rsync_cmd+=(--delete)
+    rsync_cmd+=("${PROJECT_ROOT}/")
+    rsync_cmd+=("${DEPLOY_PATH}/")
+    echo "Static -> ${DEPLOY_PATH}"
+  fi
+
+  if [[ "$DRY_RUN" != "1" ]] && [[ -z "$DEPLOY_HOST" ]]; then
+    sudo mkdir -p "$DEPLOY_PATH"
+  fi
+
+  "${rsync_cmd[@]}"
+
+  if [[ "$DRY_RUN" != "1" ]] && [[ -z "$DEPLOY_HOST" ]] && [[ -n "${DEPLOY_CHOWN}" ]]; then
+    sudo chown -R "${DEPLOY_CHOWN}" "$DEPLOY_PATH"
+  fi
+}
 
 remote_sh() {
   [[ -n "${DEPLOY_HOST:-}" ]] || {
@@ -132,10 +169,8 @@ check_certbot() {
   fi
 }
 
-echo "=== 1. Static files (deploy.sh) ==="
-CERTBOT_EMAIL="$CERTBOT_EMAIL" DEPLOY_PATH="$DEPLOY_PATH" DEPLOY_HOST="$DEPLOY_HOST" \
-  DEPLOY_USER="$DEPLOY_USER" DEPLOY_PORT="$DEPLOY_PORT" DEPLOY_CHOWN="$DEPLOY_CHOWN" \
-  DRY_RUN="$DRY_RUN" "$SCRIPT_DIR/deploy.sh"
+echo "=== 1. Static files ==="
+sync_static_files
 
 if [[ "$SKIP_NGINX" == "1" ]]; then
   echo "SKIP_NGINX=1 — skipping nginx and certbot."
@@ -146,6 +181,8 @@ if [[ "$DRY_RUN" == "1" ]]; then
   echo "DRY_RUN=1 — skipping nginx install and certbot."
   exit 0
 fi
+
+: "${CERTBOT_EMAIL:?Set CERTBOT_EMAIL (required for Certbot / ACME)}"
 
 GEN=$(mktemp) || exit 1
 _deploy_nginx_tmp=$GEN
