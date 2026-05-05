@@ -54,7 +54,7 @@ RSYNC_EXCLUDES=(
 )
 
 sync_static_files() {
-  local rsync_cmd=(rsync -av)
+  local rsync_cmd=(rsync -rlptDv)
   [[ "$DRY_RUN" == "1" ]] && rsync_cmd+=(--dry-run)
 
   if [[ -n "$DEPLOY_HOST" ]]; then
