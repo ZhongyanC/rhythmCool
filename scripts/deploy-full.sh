@@ -76,7 +76,11 @@ sync_static_files() {
     sudo mkdir -p "$DEPLOY_PATH"
   fi
 
-  "${rsync_cmd[@]}"
+  if [[ -z "$DEPLOY_HOST" ]] && [[ "$DRY_RUN" != "1" ]]; then
+    sudo "${rsync_cmd[@]}"
+  else
+    "${rsync_cmd[@]}"
+  fi
 
   if [[ "$DRY_RUN" != "1" ]] && [[ -z "$DEPLOY_HOST" ]] && [[ -n "${DEPLOY_CHOWN}" ]]; then
     sudo chown -R "${DEPLOY_CHOWN}" "$DEPLOY_PATH"
