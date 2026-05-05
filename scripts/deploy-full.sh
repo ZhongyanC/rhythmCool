@@ -37,7 +37,7 @@ DEPLOY_PATH="${DEPLOY_PATH:-/var/www/rhythmCool}"
 DEPLOY_HOST="${DEPLOY_HOST:-}"
 DEPLOY_USER="${DEPLOY_USER:-${USER:-root}}"
 DEPLOY_PORT="${DEPLOY_PORT:-22}"
-DEPLOY_CHOWN="${DEPLOY_CHOWN:-www-data:www-data}"
+DEPLOY_CHOWN="${DEPLOY_CHOWN:-nginx:nginx}"
 NGINX_SITE_NAME="${NGINX_SITE_NAME:-rhythmCool}"
 NGINX_SERVER_NAME="${NGINX_SERVER_NAME:-rhythm.cool www.rhythm.cool}"
 CERTBOT_DOMAINS="${CERTBOT_DOMAINS:-$NGINX_SERVER_NAME}"
@@ -94,7 +94,7 @@ remote_sh() {
 # True if we should skip uploading nginx template (certbot already patched SSL).
 should_skip_nginx_upload() {
   [[ "$FORCE_NGINX_CONFIG" == "1" ]] && return 1
-  local site="/etc/nginx/sites-available/${NGINX_SITE_NAME}"
+  local site="/etc/nginx/conf.d/${NGINX_SITE_NAME}.conf"
   if [[ -n "$DEPLOY_HOST" ]]; then
     remote_sh "sudo test -f ${site} && sudo grep -q ssl_certificate ${site} 2>/dev/null" && return 0
     return 1
@@ -121,11 +121,9 @@ install_nginx_site() {
   if [[ -n "$DEPLOY_HOST" ]]; then
     rsync -av -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new" \
       "$tmp_local" "${DEPLOY_USER}@${DEPLOY_HOST}:${remote_tmp}"
-    remote_sh "sudo install -m 644 ${remote_tmp} /etc/nginx/sites-available/${NGINX_SITE_NAME} && rm -f ${remote_tmp}"
-    remote_sh "sudo ln -sf /etc/nginx/sites-available/${NGINX_SITE_NAME} /etc/nginx/sites-enabled/${NGINX_SITE_NAME}"
+    remote_sh "sudo install -m 644 ${remote_tmp} /etc/nginx/conf.d/${NGINX_SITE_NAME}.conf && rm -f ${remote_tmp}"
   else
-    sudo install -m 644 "$tmp_local" "/etc/nginx/sites-available/${NGINX_SITE_NAME}"
-    sudo ln -sf "/etc/nginx/sites-available/${NGINX_SITE_NAME}" "/etc/nginx/sites-enabled/${NGINX_SITE_NAME}"
+    sudo install -m 644 "$tmp_local" "/etc/nginx/conf.d/${NGINX_SITE_NAME}.conf"
   fi
 }
 
@@ -158,12 +156,12 @@ run_certbot() {
 check_certbot() {
   if [[ -n "$DEPLOY_HOST" ]]; then
     remote_sh bash -lc 'command -v certbot >/dev/null' || {
-      echo "On ${DEPLOY_HOST}: install certbot, e.g. sudo apt install certbot python3-certbot-nginx" >&2
+      echo "On ${DEPLOY_HOST}: install certbot, e.g. sudo dnf install certbot python3-certbot-nginx" >&2
       exit 1
     }
   else
     command -v certbot >/dev/null || {
-      echo "Install certbot: sudo apt install certbot python3-certbot-nginx" >&2
+      echo "Install certbot: sudo dnf install certbot python3-certbot-nginx" >&2
       exit 1
     }
   fi
